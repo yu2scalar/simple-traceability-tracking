@@ -1,0 +1,81 @@
+// Standalone Gradle project for compiling demo-scalardl Contracts and Functions.
+//
+// Why this project exists:
+//   The demo-scalardl-app/ project bundles Spring Boot, Mustache rendering, and
+//   a runtime compile pipeline. For shipping just the Contracts and Functions
+//   to a ScalarDL Client CLI environment we don't need any of that. This
+//   project compiles only the .java sources and produces a deliverable jar.
+//
+// Source layout:
+//   .java files live under generated/{contracts,functions}/ to mirror the
+//   demo-scalardl-app/ project layout. They are NOT under src/main/java/.
+//   The sourceSets block below tells Gradle to treat generated/ as the source
+//   root.
+//
+// Build:
+//   ./gradlew build         → compiles to build/classes/java/main/...
+//   ./gradlew jar           → produces build/libs/<name>-<version>.jar
+//
+// Deliverables for the Client CLI:
+//   - build/classes/java/main/com/example/demoscalardl/{contracts,functions}/*.class
+//   - or build/libs/simple-traceability-tracking-1.0.0.jar
+//   Both target Java 17 bytecode (class file major version 61), which the
+//   ScalarDL Client CLI on Java 21 can load.
+
+plugins {
+    id 'java'
+}
+
+group       = 'com.example'
+version     = '1.0.0'
+description = 'Standalone Contracts and Functions for simple traceability tracking'
+
+// Build with Java 21 toolchain (matches the ScalarDL Client CLI's runtime).
+// The customer's Java 21 environment is used to compile; output bytecode is
+// constrained below to release 17 for forward-compatibility.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ScalarDL Java Client SDK provides the Contract / Function base classes
+    // (JacksonBasedContract, JacksonBasedFunction) and re-exports the ScalarDB
+    // API surface used by Functions (Put, Get, Scan, Delete, Result, Key).
+    // Jackson (JsonNode, ArrayNode, ObjectNode) comes in transitively.
+    implementation 'com.scalar-labs:scalardl-java-client-sdk:3.13.0'
+
+    // javax.* APIs that Java 17+ no longer bundles. Required because some
+    // ScalarDL SDK classes still reference javax.json / javax.annotation types
+    // at compile time.
+    implementation 'javax.json:javax.json-api:1.0'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+}
+
+// Use generated/ as the Java source root (instead of the default src/main/java/).
+// File paths inside generated/ do NOT need to mirror the package; the package
+// declaration in each .java file is what determines the .class output path.
+sourceSets {
+    main {
+        java {
+            srcDirs = ['generated']
+        }
+    }
+}
+
+// Target Java 17 bytecode (class file major version 61). ScalarDL Client CLI
+// on Java 21 loads Java 17 bytecode without issue (forward compatibility).
+// This matches demo-scalardl-app/'s JavaCompilerService runtime release setting.
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(17)
+}
+
+// Slim, predictable jar name for delivery.
+jar {
+    archiveBaseName = project.name
+}

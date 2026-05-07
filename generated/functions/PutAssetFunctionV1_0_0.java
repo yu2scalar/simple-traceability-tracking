@@ -56,7 +56,7 @@ import com.scalar.dl.ledger.function.JacksonBasedFunction;
  */
 public class PutAssetFunctionV1_0_0 extends JacksonBasedFunction {
 
-    private static final String NAMESPACE = "ns_postgres";
+    private static final String NAMESPACE = "demo";
     private static final String TABLE = "inventory";
 
     /**

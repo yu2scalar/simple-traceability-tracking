@@ -30,7 +30,7 @@ import com.scalar.dl.ledger.function.JacksonBasedFunction;
  */
 public class PutAssetsFunctionV1_0_1 extends JacksonBasedFunction {
 
-    private static final String NAMESPACE = "ns_postgres";
+    private static final String NAMESPACE = "demo";
     private static final String TABLE = "inventory";
 
     @Override
